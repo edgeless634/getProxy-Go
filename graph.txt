@@ -1,0 +1,37 @@
+digraph graph1{
+    rankdir = UD
+    compound = true
+    node [shape = record, fontname = "微软雅黑"]
+    edge [fontname = "微软雅黑"]
+    main
+    testedProxy
+    testedProxySub
+    getProxy
+    allIPChannel [shape = diamond]
+    channel [shape = diamond]
+    subgraph cluster_0 {
+        node [style=filled]
+        getProxySub[label="{<f0> getProxy1|<f1> getProxy2|<f2> getProxy3}"];
+        label = "WaitGroup"
+    }
+    subgraph cluster_1 {
+        node [style = filled]
+        testedProxySub[label="{<f0> testedProxySub|<f1> testedProxySub|<f2> testedProxySub}"];
+        label = "WaitGroup"
+    }
+    /*
+    main -> testedProxy [color = grey]
+    testedProxy -> testedProxySub [color = grey]
+    testedProxy -> getProxy [color = grey]
+    getProxy -> getProxySub [color = grey]
+    */
+    getProxySub -> allIPChannel [color = green, label = "IPPort", weight = 2]
+    allIPChannel -> testedProxySub [color = green, label = "IPPort", weight = 3]
+    testedProxySub -> channel [color = green, label = "tested\nIPPort", weight = 2]
+    channel -> main [color = green, label = "tested\nIPPort", weight = 1]
+    testedProxy -> channel
+    getProxy -> allIPChannel 
+    testedProxy -> testedProxySub [lhead = cluster_1]
+    getProxy -> getProxySub [lhead = cluster_0]
+}
+
