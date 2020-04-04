@@ -82,7 +82,7 @@ func getHTML(url, proxy string) string {
 
 
 //以下是n个免费代理网站的爬虫
-func getProxy1(channel chan string, wg *sync.WaitGroup){
+func getProxy1(allIPChannel chan string, wg *sync.WaitGroup){
 	html := getHTML("https://www.kuaidaili.com/free/", "")
 	root, _ := htmlquery.Parse(strings.NewReader(html))
 	tr := htmlquery.Find(root, "//*[@id='list']/table/tbody/tr")
@@ -91,12 +91,12 @@ func getProxy1(channel chan string, wg *sync.WaitGroup){
 		ip := htmlquery.InnerText(item[0])
 		port := htmlquery.InnerText(item[1])
 		p := ip + ":" + port
-		channel <- p
+		allIPChannel <- p
 	}
 	wg.Done()
 }
 
-func getProxy2(channel chan string, wg *sync.WaitGroup){
+func getProxy2(allIPChannel chan string, wg *sync.WaitGroup){
 	for i := 1; i <= MaxPages; i++ {
 		urlNow := ""
 		if i == 1{
@@ -113,13 +113,13 @@ func getProxy2(channel chan string, wg *sync.WaitGroup){
 			ip := htmlquery.InnerText(item[1]) //ip
 			port := htmlquery.InnerText(item[2]) //port
 			p := ip + ":" + port
-			channel <- p
+			allIPChannel <- p
 		}
 	}
 	wg.Done()
 }
 
-func getProxy3(channel chan string, wg *sync.WaitGroup){
+func getProxy3(allIPChannel chan string, wg *sync.WaitGroup){
 	for i := 1; i <= MaxPages; i++ {
 		html := getHTML(fmt.Sprintf("http://www.66ip.cn/%d.html", i), "")
 		root, _ := htmlquery.Parse(strings.NewReader(html))
@@ -129,13 +129,13 @@ func getProxy3(channel chan string, wg *sync.WaitGroup){
 			ip := htmlquery.InnerText(item[0])
 			port := htmlquery.InnerText(item[1])
 			p := ip + ":" + port
-			channel <- p
+			allIPChannel <- p
 		}
 	}
 	wg.Done()
 }
 
-func getProxy4(channel chan string, wg *sync.WaitGroup){
+func getProxy4(allIPChannel chan string, wg *sync.WaitGroup){
 	html := getHTML("http://m.feizhuip.com/Index/article/id/470.html", "")
 	root, _ := htmlquery.Parse(strings.NewReader(html))
 	tr := htmlquery.Find(root, "/html/body/div[3]/div[2]/div/table/tbody/tr")
@@ -144,24 +144,24 @@ func getProxy4(channel chan string, wg *sync.WaitGroup){
 		ip := htmlquery.InnerText(item[0])
 		port := htmlquery.InnerText(item[1])
 		p := ip + ":" + port
-		channel <- p
+		allIPChannel <- p
 	}
 	wg.Done()
 }
 
-func getProxy5(channel chan string, wg *sync.WaitGroup){
+func getProxy5(allIPChannel chan string, wg *sync.WaitGroup){
 	html := getHTML("http://www.xiladaili.com/gaoni/", "")
 	root, _ := htmlquery.Parse(strings.NewReader(html))
 	tr := htmlquery.Find(root, "/html/body/div/div[3]/div[2]/table/tbody/tr")
 	for _, row := range tr {
 		item := htmlquery.Find(row, ".//td")
 		p := htmlquery.InnerText(item[0])
-		channel <- p
+		allIPChannel <- p
 	}
 	wg.Done()
 }
 
-func getProxy6(channel chan string, wg *sync.WaitGroup){
+func getProxy6(allIPChannel chan string, wg *sync.WaitGroup){
 	html := getHTML("http://www.89ip.cn/", "")
 	root, _ := htmlquery.Parse(strings.NewReader(html))
 	tr := htmlquery.Find(root, "//tbody/tr")
@@ -170,27 +170,27 @@ func getProxy6(channel chan string, wg *sync.WaitGroup){
 		ip := removeSpace(htmlquery.InnerText(item[0]))
 		port := removeSpace(htmlquery.InnerText(item[1]))
 		p := ip + ":" + port
-		channel <- p
+		allIPChannel <- p
 	}
 	wg.Done()
 }
 
-func getProxy(channel chan string){
+func getProxy(allIPChannel chan string){
 	/*
 	启动并管理n个网站的爬虫
 	*/
 	wg := sync.WaitGroup{}
 	//启动n个不同网站的爬虫
 	wg.Add(6)
-	go getProxy1(channel, &wg)
-	go getProxy2(channel, &wg)
-	go getProxy3(channel, &wg)
-	go getProxy4(channel, &wg)
-	go getProxy5(channel, &wg)
-	go getProxy6(channel, &wg)
+	go getProxy1(allIPChannel, &wg)
+	go getProxy2(allIPChannel, &wg)
+	go getProxy3(allIPChannel, &wg)
+	go getProxy4(allIPChannel, &wg)
+	go getProxy5(allIPChannel, &wg)
+	go getProxy6(allIPChannel, &wg)
 	//等待爬虫完成
 	wg.Wait()
-	close(channel)
+	close(allIPChannel)
 }
 
 func testProxy(ipPort string) bool {
