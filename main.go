@@ -28,15 +28,25 @@ var allUserAgent = [5]string{ //allUserAgent 全部UA
 }
 
 func removeSpace(s string) string {
+	/*
+	移除字符串前后的tab和回车
+	*/
 	l, r := 0, len(s)-1
-	for ; l < len(s) && (s[l] == '\t' || s[l] == '\n'); l++ {
+	for l < len(s) && (s[l] == '\t' || s[l] == '\n'){
+		l++
 	}
-	for ;r >= 0 && (s[r] == '\t' || s[r] == '\n'); r-- {
+	for r >= 0 && (s[r] == '\t' || s[r] == '\n') {
+		r--
 	}
 	return s[l:r+1]
 }
 
 func getClient(proxy string) *http.Client {
+	/*
+	获得一个自动配置的http.Client
+
+	不使用代理时应该让proxy = ""
+	*/
 	if proxy != "" {
 		urli := url.URL{}
 		urlproxy, _ := urli.Parse(proxy)
@@ -52,6 +62,9 @@ func getClient(proxy string) *http.Client {
 }
 
 func getHTML(url, proxy string) string {
+	/*
+	获得一个url的body
+	*/
     req, _ := http.NewRequest("GET", url, nil)
     req.Header.Add("User-Agent", allUserAgent[rand.Intn(5)])
 	client := getClient(proxy)
@@ -67,6 +80,8 @@ func getHTML(url, proxy string) string {
     return fmt.Sprintf("%s", data)
 }
 
+
+//以下是n个免费代理网站的爬虫
 func getProxy1(channel chan string, wg *sync.WaitGroup){
 	html := getHTML("https://www.kuaidaili.com/free/", "")
 	root, _ := htmlquery.Parse(strings.NewReader(html))
@@ -161,8 +176,11 @@ func getProxy6(channel chan string, wg *sync.WaitGroup){
 }
 
 func getProxy(channel chan string){
+	/*
+	启动并管理n个网站的爬虫
+	*/
 	wg := sync.WaitGroup{}
-	//n个不同网站的爬虫
+	//启动n个不同网站的爬虫
 	wg.Add(6)
 	go getProxy1(channel, &wg)
 	go getProxy2(channel, &wg)
@@ -170,15 +188,21 @@ func getProxy(channel chan string){
 	go getProxy4(channel, &wg)
 	go getProxy5(channel, &wg)
 	go getProxy6(channel, &wg)
+	//等待爬虫完成
 	wg.Wait()
 	close(channel)
 }
 
-func testProxy(ip string) bool {
+func testProxy(ipPort string) bool {
+	/*
+	测试代理ipPort是否有效
+
+	ipPort : "xxx.xxx.xxx.xxx:xxxx"
+	*/
 	url := "https://www.baidu.com"
     req, _ := http.NewRequest("GET", url, nil)
     req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3776.0 Safari/537.36")
-	client := getClient("http://" + ip)
+	client := getClient("http://" + ipPort)
 	resp, err := client.Do(req)
     if err != nil {
         return false
@@ -192,6 +216,9 @@ func testProxy(ip string) bool {
 }
 
 func testedProxySub(allIPChannel, channel chan string, wg *sync.WaitGroup) {
+	/*
+	把allIPChannel中的可用代理传入channel
+	*/
 	for ip := range allIPChannel{
 		success := 0
 		for i := 1; i <= 5; i++ {
@@ -207,6 +234,9 @@ func testedProxySub(allIPChannel, channel chan string, wg *sync.WaitGroup) {
 }
 
 func testedProxy(channel chan string) {
+	/*
+	向channel传入可用的代理
+	*/
 	wg := sync.WaitGroup{}
 	allIPChannel := make(chan string, 10)
 	go getProxy(allIPChannel)
